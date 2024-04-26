@@ -1,19 +1,35 @@
-use std::{env};
+use std::{env, thread};
 
 use serde::{Deserialize, Serialize};
-use systemstat::{saturating_sub_bytes, Platform, System};
+use systemstat::{saturating_sub_bytes, Duration, Platform, System, ByteSize};
 
 #[derive(Default, Serialize, Deserialize)]
 struct Stat {
+    cpu: Cpu,
     memory: Memory,
     temp: f32,
-    uptime: u64
+    uptime: u64,
+    filsystem: Filesystem
+}
+
+#[derive(Default, Serialize, Deserialize)]
+struct Cpu {
+    total: f32,
+    sys: f32,
+    user: f32
 }
 
 #[derive(Default, Serialize, Deserialize)]
 struct Memory {
     total: u64,
     free: u64,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+struct Filesystem {
+    total: u64,
+    free: u64,
+    available: u64
 }
 
 #[tokio::main]
@@ -36,6 +52,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let sys = System::new();
 
+    let cpu = match sys.cpu_load() {
+        Ok(cpu) => {
+            thread::sleep(Duration::from_secs(1));
+            let cpu = &cpu.done().unwrap()[0];
+            let cpu_result = Cpu {
+                total: (cpu.user * 100.0) + (cpu.system * 100.0),
+                sys: cpu.system * 100.0,
+                user: cpu.user * 100.0
+            };
+            
+            cpu_result
+        },
+        Err(_e) => Cpu::default(),
+    };
+
     let memory = match sys.memory() {
         Ok(mem) => Memory {
             total: mem.total.as_u64(),
@@ -54,10 +85,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(_e) => 0
     };
     
+    let fs = match sys.mount_at("/") {
+        Ok(mount) => Filesystem {
+            total: ByteSize::b(mount.total.as_u64()).as_u64(),
+            free: ByteSize::b(mount.free.as_u64()).as_u64(),
+            available: ByteSize::b(mount.avail.as_u64()).as_u64()
+        },
+        Err(_e) => Filesystem::default()
+    };
+    
     let stat = Stat{
+        cpu,
         memory,
         temp,
-        uptime
+        uptime,
+        filsystem: fs
     };
 
     let resp = client
