@@ -2,4 +2,6 @@
 
 The detective that watches system resource usage
 
-![Poirot Logo](poirot-logo.png)
+<p align="center">
+    <img src="poirot-logo.png" width="200" height="200"/>
+</p>
