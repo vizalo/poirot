@@ -16,7 +16,7 @@ Poirot can currently monitor:
 ### Installation
 
 > [!IMPORTANT]
-> To start using Poirot you will need to make sure you have the Poirot app up and running, you can find setup instructions [here](https://github.com/vizalo/poirot-app/blob/main/README.md#installation)
+> To start using Poirot you will need to make sure you have the Poirot API up and running, you can find setup instructions [here](https://github.com/vizalo/poirot-api/blob/main/README.md#installation)
 
 On your server you can install Poirot with:
 ```sh
